@@ -28,6 +28,17 @@
             <artifactId>spring-boot-starter-web</artifactId>
         </dependency>
 
+        <!--
+        이거 셋팅하면 /(root)에 접근하기만 하면 로그인 창이 뜬다.
+        기본 ID는 user
+        PW는 콘솔에 뜨는 password
+        -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-security</artifactId>
+            <version>2.3.1.RELEASE</version>
+        </dependency>
+
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-test</artifactId>
