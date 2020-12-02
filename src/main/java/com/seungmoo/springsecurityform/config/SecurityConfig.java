@@ -15,7 +15,7 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
     @Override
     protected void configure(HttpSecurity http) throws Exception {
         http.authorizeRequests()
-                .mvcMatchers("/", "/info").permitAll() // 인증 없이도 접근 가능
+                .mvcMatchers("/", "/info", "/account/**").permitAll() // 인증 없이도 접근 가능
                 .mvcMatchers("admin").hasRole("ADMIN")
                 .anyRequest().authenticated();
         http.formLogin(); // form login 사용  /login으로 접속하면 login 창이 뜬다. /logout 접속 시 로그아웃 기능
@@ -32,6 +32,7 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
      * @param auth
      * @throws Exception
      */
+    /*
     @Override
     protected void configure(AuthenticationManagerBuilder auth) throws Exception {
         // {***} --> 스프링의 기본적인 패스워드 인코더 prefix, 해당 prefix에 해당하는 암호화(encoding)을 진행한다.
@@ -42,4 +43,5 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
                 .withUser("seungmoo").password("{noop}123").roles("USER").and()
                 .withUser("admin").password("{noop}!@#").roles("ADMIN");
     }
+    */
 }
