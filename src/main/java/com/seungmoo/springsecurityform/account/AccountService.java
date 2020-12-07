@@ -45,6 +45,7 @@ public class AccountService implements UserDetailsService {
 
     public Account createNew(Account account) {
         // 패스워드 인코딩 필수 (스프링 시큐리티 최근 버전 부터...)
+        // 회원 가입의 경우 password encoding 이게 젤 중요하다.
         account.encodePassword(passwordEncoder);
         return this.accountRepository.save(account);
     }

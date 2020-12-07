@@ -18,7 +18,10 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
                 .mvcMatchers("/", "/info", "/account/**").permitAll() // 인증 없이도 접근 가능
                 .mvcMatchers("admin").hasRole("ADMIN")
                 .anyRequest().authenticated();
-        http.formLogin(); // form login 사용  /login으로 접속하면 login 창이 뜬다. /logout 접속 시 로그아웃 기능
+
+        // form login 사용  /login으로 접속하면 login 창이 뜬다. /logout 접속 시 로그아웃 기능
+        http.formLogin();
+
         http.httpBasic(); // http의 basic authentication 사용
 
         /**

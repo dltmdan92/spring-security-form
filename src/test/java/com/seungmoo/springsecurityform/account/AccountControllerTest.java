@@ -9,10 +9,14 @@ import org.springframework.security.test.context.support.WithAnonymousUser;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.context.junit4.SpringRunner;
 import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.transaction.annotation.Transactional;
 
 import static org.junit.Assert.*;
+import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestBuilders.formLogin;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.anonymous;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.user;
+import static org.springframework.security.test.web.servlet.response.SecurityMockMvcResultMatchers.authenticated;
+import static org.springframework.security.test.web.servlet.response.SecurityMockMvcResultMatchers.unauthenticated;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -23,6 +27,9 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 public class AccountControllerTest {
     @Autowired
     MockMvc mockMvc;
+
+    @Autowired
+    AccountService accountService;
 
     /**
      * anonymous 익명 테스트
@@ -93,5 +100,54 @@ public class AccountControllerTest {
         mockMvc.perform(get("/admin"))
                 .andDo(print())
                 .andExpect(status().isOk());
+    }
+
+    private Account createUser(String username, String password) {
+        Account account = new Account();
+        account.setUsername(username);
+        account.setPassword(password);
+        account.setRole("USER");
+        return accountService.createNew(account);
+    }
+
+    /**
+     * @Transactional 을 붙여야 하는 이유
+     * - 각각의 테스트들을 동시에 실행하다 보면, 테스트가 깨지게 된다.
+     * - createUser()를 다같이 호출하게 되면 UNIQUE 값 DUPLICATE 에러가 발생하게 됨
+     * - @Transactional을 붙여줘서 각각의 테스트에서 데이터 변형 후, 원복시켜주도록 한다.
+     */
+
+    /**
+     * spring security test의 formLogin을 사용해보자.
+     * @throws Exception
+     */
+    @Test
+    @Transactional
+    public void login_success() throws Exception {
+        String username = "seungmoo";
+        String password = "123";
+        Account user = createUser(username, password); // 리턴되는 password는 암호화 encoding 된 것임.
+        mockMvc.perform(formLogin().user(user.getUsername()).password(password))
+                .andExpect(authenticated()); // 인증 여부 테스트
+    }
+
+    @Test
+    @Transactional
+    public void login_success2() throws Exception {
+        String username = "seungmoo";
+        String password = "123";
+        Account user = createUser(username, password); // 리턴되는 password는 암호화 encoding 된 것임.
+        mockMvc.perform(formLogin().user(user.getUsername()).password(password))
+                .andExpect(authenticated()); // 인증 여부 테스트
+    }
+
+    @Test
+    @Transactional
+    public void login_fail() throws Exception {
+        String username = "seungmoo";
+        String password = "123";
+        Account user = createUser(username, password); // 리턴되는 password는 암호화 encoding 된 것임.
+        mockMvc.perform(formLogin().user(user.getUsername()).password("12345"))
+                .andExpect(unauthenticated()); // 인증 여부 테스트
     }
 }
