@@ -1,5 +1,8 @@
 package com.seungmoo.springsecurityform.form;
 
+import com.seungmoo.springsecurityform.account.Account;
+import com.seungmoo.springsecurityform.account.AccountContext;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -8,8 +11,15 @@ import org.springframework.stereotype.Service;
 import java.util.Collection;
 
 @Service
+@Slf4j
 public class SampleService {
     public void dashboard() {
+        Account account = AccountContext.getAccount();
+        log.info("===================================");
+        log.info(account.getUsername());
+    }
+
+    public void getAuthInfo() {
         /**
          * 스프링 시큐리티 인증이 성공하면 SecurityContextHolder에 Authentication 정보가 등록된다.
          * logout 하면 authentication 정보가 제거 및 isAuthenticated도 false
