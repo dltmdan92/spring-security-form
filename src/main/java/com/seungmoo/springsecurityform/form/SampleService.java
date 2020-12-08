@@ -13,6 +13,9 @@ public class SampleService {
         /**
          * 스프링 시큐리티 인증이 성공하면 SecurityContextHolder에 Authentication 정보가 등록된다.
          * logout 하면 authentication 정보가 제거 및 isAuthenticated도 false
+         *
+         * SecurityContextHolder : Authentication을 담고 있는 것.
+         * AuthenticationManager : Authentication을 하는 것. (기본 구현체 : ProviderManager)
          */
 
         /**
@@ -34,6 +37,7 @@ public class SampleService {
         // User 객체를 만들때 "ROLE_USER, ROLE_ADMIN" 이런식으로 권한을 생성한다.
         Collection<? extends GrantedAuthority> authorities = authentication.getAuthorities();
 
+        // 인증정보(password)가 담겨 있음 (UsernamePasswordAuthenticationToken 구현체의 경우)
         Object credentials = authentication.getCredentials();
 
         boolean authenticated = authentication.isAuthenticated();

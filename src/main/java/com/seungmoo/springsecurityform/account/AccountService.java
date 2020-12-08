@@ -13,6 +13,7 @@ import org.springframework.stereotype.Service;
  * UserDetailsService --> 인증을 위해 DAO를 통해 DB의 User 정보를 들고오는 interface.
  *                      --> 실제로 여기서 인증하지 않음.
  *                      --> DB는 RDB, NoSQL, 인메모리 등등 상관없음 (DB 연동은 직접 구현한다.)
+ *                      --> 인증은 AuthenticationManager 가 한다.
  *
  * 직접 UserDetailsService implement해서 메소드 구현 하거나
  * SecurityConfig에서 configure 메소드 구현해서 accountService를 명시 해주는 방법
