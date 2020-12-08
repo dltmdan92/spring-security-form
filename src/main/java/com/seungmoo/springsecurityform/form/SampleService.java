@@ -6,6 +6,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Service;
 
 import java.util.Collection;
@@ -14,9 +15,28 @@ import java.util.Collection;
 @Slf4j
 public class SampleService {
     public void dashboard() {
-        Account account = AccountContext.getAccount();
+        // SecurityContextPersistenceFilter가 Http Request 를 받아서 처리한다. (시큐리티 필터를 거치는 모든 요청)
+
+        // SecurityContextPersistenceFilter는
+        // Request가 들어오면, 먼저 캐싱된 SecurityContext를 찾다가 없으면
+        // UsernamePasswordAuthenticationFilter(form 인증 처리하는 필터)에서 authenticate를 한다. --> AuthenticationManager를 사용해서 authenticate를 한다.
+        // 그리고 authentication 기반의 SecurityContext를 SecurityContextHolder에 넣어준다.
+        // AbstractAuthenticationProcessingFilter에서 SecurityContextHolder.getContext().setAuthentication(authResult); 실행된다.
+        // 그리고 나서 목적 URL로 Redirect한다. 그리고 SecurityContextPersistenceFilter가 또 다시 Request를 받게 된다.
+        // 그리고 HttpSessionSecurityContextRepository에서 SecurityContext를 가져온다. (SecurityContextPersistenceFilter에서)
+        // 그리고 다시 SecurityContextHolder에 이 SecurityContext를 넣어준다.
+        // 마지막으로 Request가 끝나면 SecurityContextPersistenceFilter는 SecurityContextHolder에서 Context를 제거한다.
+        // 새로 고침을 하면 SecurityContextPersistenceFilter가 또 다시 Session에서 context를 불러온다. (Session이 바뀌면 인증정보가 날아감)
+        // 만약 stateless하게(session 미사용) 한다면 매 요청마다 인증을 해야 한다.
+
+        // Request가 끝나면 SecurityContextHolder에서 context를 clear한다.
+
+        // 다중 요청에도 Context에 User authentication 정보를 들고 있음.
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        UserDetails userDetails = (UserDetails) authentication.getPrincipal();
         log.info("===================================");
-        log.info(account.getUsername());
+        System.out.println(authentication);
+        log.info(userDetails.getUsername());
     }
 
     public void getAuthInfo() {
@@ -47,7 +67,10 @@ public class SampleService {
         // User 객체를 만들때 "ROLE_USER, ROLE_ADMIN" 이런식으로 권한을 생성한다.
         Collection<? extends GrantedAuthority> authorities = authentication.getAuthorities();
 
-        // 인증정보(password)가 담겨 있음 (UsernamePasswordAuthenticationToken 구현체의 경우)
+        /**
+         * 인증이 된 Authentication 객체는 SecurityContextHolder에 담긴다.
+         * 이때 credentials(Password)는 없음.
+         */
         Object credentials = authentication.getCredentials();
 
         boolean authenticated = authentication.isAuthenticated();

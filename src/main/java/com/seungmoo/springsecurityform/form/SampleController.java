@@ -50,8 +50,10 @@ public class SampleController {
     @GetMapping("/dashboard")
     public String dashboard(Model model, Principal principal) {
         model.addAttribute("message", "Hello " + principal.getName());
-        AccountContext.setAccount(accountRepository.findByUsername(principal.getName()));
         sampleService.getAuthInfo();
+
+        // Spring Security에서 Authenticate하면서 ThreadLocal에 Authentication 객체를 넣는다.
+        // ThreadLocal을 통해 굳이 Principal을 파라미터로 주지 않아도 User 정보를 찾을 수 있다.
         sampleService.dashboard();
         return "dashboard"; // 뷰 이름 리턴, 해당 뷰를 찾아서 response를 담아서 보내준다.
     }
