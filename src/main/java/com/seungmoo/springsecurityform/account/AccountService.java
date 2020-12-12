@@ -10,7 +10,7 @@ import org.springframework.stereotype.Service;
 
 /**
  * 비즈니스 로직
- * UserDetailsService --> 인증을 위해 DAO를 통해 DB의 User 정보를 들고오는 interface.
+ * UserDetailsService --> 인증을 위해 DAO를 통해 DB의 User 정보를 들고오는 interface.F
  *                      --> 실제로 여기서 인증하지 않음.
  *                      --> DB는 RDB, NoSQL, 인메모리 등등 상관없음 (DB 연동은 직접 구현한다.)
  *                      --> 인증은 AuthenticationManager 가 한다. (UsernamePasswordAuthenticationFilter에서)
