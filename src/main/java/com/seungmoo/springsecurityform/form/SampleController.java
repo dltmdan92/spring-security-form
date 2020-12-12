@@ -64,4 +64,17 @@ public class SampleController {
         return "admin"; // 뷰 이름 리턴, 해당 뷰를 찾아서 response를 담아서 보내준다.
     }
 
+    /**
+     * USER 권한을 가진 계정만 접근하도록 한다.
+     * AccessDecisionManager(인가) 실습
+     * @param model
+     * @param principal
+     * @return
+     */
+    @GetMapping("/user")
+    public String user(Model model, Principal principal) {
+        model.addAttribute("message", "Hello User, " + principal.getName());
+        return "user";
+    }
+
 }

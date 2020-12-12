@@ -4,10 +4,20 @@ import org.springframework.boot.autoconfigure.security.SecurityProperties;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.Ordered;
 import org.springframework.core.annotation.Order;
+import org.springframework.security.access.AccessDecisionManager;
+import org.springframework.security.access.AccessDecisionVoter;
+import org.springframework.security.access.expression.SecurityExpressionHandler;
+import org.springframework.security.access.hierarchicalroles.RoleHierarchyImpl;
+import org.springframework.security.access.vote.AffirmativeBased;
 import org.springframework.security.config.annotation.authentication.builders.AuthenticationManagerBuilder;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configuration.WebSecurityConfigurerAdapter;
+import org.springframework.security.web.access.expression.DefaultWebSecurityExpressionHandler;
+import org.springframework.security.web.access.expression.WebExpressionVoter;
+
+import java.util.Arrays;
+import java.util.List;
 
 /**
  * 스프링 WEB Security 셋팅 해보자
@@ -27,9 +37,39 @@ import org.springframework.security.config.annotation.web.configuration.WebSecur
  */
 @Configuration
 @EnableWebSecurity // 이거 빼도 된다. 스프링부트에서는 자동설정이 알아서 추가해주기 때문임.
-@Order(Ordered.LOWEST_PRECEDENCE - 10) // Config의 Order 설정 (숫자가 낮을 수록 우선순위)
+@Order(Ordered.LOWEST_PRECEDENCE - 100) // Config의 Order 설정 (숫자가 낮을 수록 우선순위)
 public class SecurityConfig extends WebSecurityConfigurerAdapter {
 
+    /**
+     * ROLE hierarchy 적용한 AccessDecisionManager를 만들었다.
+     * @return
+     */
+    public AccessDecisionManager accessDecisionManager() {
+        RoleHierarchyImpl roleHierarchy = new RoleHierarchyImpl();
+        roleHierarchy.setHierarchy("ROLE_ADMIN > ROLE_USER");
+
+        DefaultWebSecurityExpressionHandler defaultWebSecurityExpressionHandler = new DefaultWebSecurityExpressionHandler();
+        defaultWebSecurityExpressionHandler.setRoleHierarchy(roleHierarchy);
+
+        WebExpressionVoter webExpressionVoter = new WebExpressionVoter();
+        webExpressionVoter.setExpressionHandler(defaultWebSecurityExpressionHandler);
+        List<AccessDecisionVoter<? extends Object>> voters = List.of(webExpressionVoter);
+        return new AffirmativeBased(voters);
+    }
+
+    /**
+     * 위의 기능과 같음 .expressionHandler에 넣어준다.
+     * @return
+     */
+    public SecurityExpressionHandler securityExpressionHandler() {
+        RoleHierarchyImpl roleHierarchy = new RoleHierarchyImpl();
+        roleHierarchy.setHierarchy("ROLE_ADMIN > ROLE_USER");
+
+        DefaultWebSecurityExpressionHandler defaultWebSecurityExpressionHandler = new DefaultWebSecurityExpressionHandler();
+        defaultWebSecurityExpressionHandler.setRoleHierarchy(roleHierarchy);
+
+        return defaultWebSecurityExpressionHandler;
+    }
 
     @Override
     protected void configure(HttpSecurity http) throws Exception {
@@ -38,10 +78,20 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
         http.antMatcher("/**") // antMatcher 설정을 안하면 모든 요청을 해당 필터에 맵핑한다.
                 .authorizeRequests()
                 .mvcMatchers("/", "/info", "/account/**").permitAll() // 인증 없이도 접근 가능
-                .mvcMatchers("admin").hasRole("ADMIN")
-                .anyRequest().authenticated();
+                .mvcMatchers("/admin").hasRole("ADMIN")
+                // ADMIN인데 USER 페이지에는 접근을 못하는 건가???
+                // Spring Security는 ROLE_ADMIN, ROLE_USER 이런거 모른다. --> 어떻게 할까??
+                // 방법 1. ADMIN user의 경우, User.buider() 할 때 ADMIN 권한과 함께, USER 권한도 같이 준다.
+                // 방법 2. AccessDecisionManager가 ROLE들의 hierarchy를 이해하도록 설정한다. (직접 만듦)
+                .mvcMatchers("/user").hasRole("USER")
+                //.accessDecisionManager(accessDecisionManager()) // AccessDecisionManager를 직접 만들어서 넣어준다.
+                .anyRequest().authenticated()
+                // AccessDecisionManager 커스텀 셋팅하지 말고 이렇게 셋팅해도 된다.
+                // AccessDecisionManager는 그냥 디폴트이고, AccessDecisionVoter가 사용하는 ExpressionHandler만 바꾼것임.
+                .expressionHandler(securityExpressionHandler())
+        ;
 
-       // form login 사용  /login으로 접속하면 login 창이 뜬다. /logout 접속 시 로그아웃 기능
+        // form login 사용  /login으로 접속하면 login 창이 뜬다. /logout 접속 시 로그아웃 기능
         http.formLogin();
 
         http.httpBasic(); // http의 basic authentication 사용
