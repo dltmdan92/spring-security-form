@@ -76,11 +76,12 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
     @Override
     public void configure(WebSecurity web) throws Exception {
         // FilterChainProxy에서 favicon 요청은 filter 적용 무시한다.
-        // 1. 필요없는 filters 적용 방지
+        // 1. 필요없는 filters 적용 방지 (실제로 필터를 하나도 안탄다. 빠름)
         // 2. .anyRequest().authenticated() --> 이거 때문에 익명 비인증 사용자의 경우 인증못받아서 /login로 이동하는 현상 방지
         //web.ignoring().mvcMatchers("/favicon.ico"); // 매번 이렇게 static resource를 명시하는 것은 불편...
 
-        // 이렇게 정적 리소스 요청 시 선언해주면 더 편하다.
+        // 이렇게 정적 리소스 요청 시 선언해주면 더 편하다. 이 방법이 가장 낫다.
+        // 스프링 시큐리티 적용안할 리소스는 이렇게 필터에서 먼저 아예 제외하는 게 좋다.
         web.ignoring().requestMatchers(PathRequest.toStaticResources().atCommonLocations());
     }
 
@@ -88,17 +89,23 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
     protected void configure(HttpSecurity http) throws Exception {
         // FilterChain 설정, 여러 개의 FilterChain이 있을 경우 @Order 순위를 따른다.
         // 여기서 선언하는 것들에 따라 Filter들의 설정이 달라지는 것이다.
+        // 동적 리소스는 여기서 필터 적용해주는 것이 좋다. (동적 리소스는 필터를 태우는게 맞음.)
         http.antMatcher("/**") // antMatcher 설정을 안하면 모든 요청을 해당 필터에 맵핑한다.
                 .authorizeRequests()
                 .mvcMatchers("/", "/info", "/account/**").permitAll() // 인증 없이도 접근 가능
                 .mvcMatchers("/admin").hasRole("ADMIN")
+
                 // ADMIN인데 USER 페이지에는 접근을 못하는 건가???
                 // Spring Security는 ROLE_ADMIN, ROLE_USER 이런거 모른다. --> 어떻게 할까??
                 // 방법 1. ADMIN user의 경우, User.buider() 할 때 ADMIN 권한과 함께, USER 권한도 같이 준다.
                 // 방법 2. AccessDecisionManager가 ROLE들의 hierarchy를 이해하도록 설정한다. (직접 만듦)
                 .mvcMatchers("/user").hasRole("USER")
                 //.accessDecisionManager(accessDecisionManager()) // AccessDecisionManager를 직접 만들어서 넣어준다.
+
+                // 이렇게 하면 favicon 요청에 대해서 filter 15개를 전부 다 탄다. (안좋음)
+                //.requestMatchers(PathRequest.toStaticResources().atCommonLocations()).permitAll() --> 이거는 비추천, 느리다.
                 .anyRequest().authenticated()
+
                 // AccessDecisionManager 커스텀 셋팅하지 말고 이렇게 셋팅해도 된다.
                 // AccessDecisionManager는 그냥 디폴트이고, AccessDecisionVoter가 사용하는 ExpressionHandler만 바꾼것임.
                 .expressionHandler(securityExpressionHandler())

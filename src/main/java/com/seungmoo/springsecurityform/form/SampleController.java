@@ -2,12 +2,16 @@ package com.seungmoo.springsecurityform.form;
 
 import com.seungmoo.springsecurityform.account.AccountContext;
 import com.seungmoo.springsecurityform.account.AccountRepository;
+import com.seungmoo.springsecurityform.common.SecurityLogger;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.ResponseBody;
 
 import java.security.Principal;
+import java.util.concurrent.Callable;
 
 @Controller
 public class SampleController {
@@ -75,6 +79,38 @@ public class SampleController {
     public String user(Model model, Principal principal) {
         model.addAttribute("message", "Hello User, " + principal.getName());
         return "user";
+    }
+
+    /**
+     * Async한 핸들러는 Callable을 리턴할 수 있다.
+     *
+     * 해당 request를 처리하던 쓰레드를 release 하고,
+     * Callable 안의 프로세스가 완료되면 그 응답을 또 release 한다.
+     *
+     * 핸들러의 쓰레드와 Callable 쓰레드가 다르지만,
+     * Principal 정보는 동일함을 확인해보자. --> WebAsyncManagerIntegrationFilter 의 역할
+     *
+     * <WebAsyncManagerIntegrationFilter>
+     * 스프링 MVC의 Async 기능(핸들러에서 Callable리턴할 수 있는 기능)을 사용할 때도
+     * SecurityContext를 공유하도록 도와주는 필터 --> 동일한 Principal을 참조할 수 있음.
+     * ●	PreProcess: SecurityContext를 설정한다. --> SecurityContext를 새로 만들어지는 Thread에 Integration해줌.
+     * ●	Callable: 비록 다른 쓰레드지만 그 안에서는 동일한 SecurityContext를 참조할 수 있다.
+     * ●	PostProcess: SecurityContext를 정리(clean up)한다. (참고로 SecurityContext는 매 req가 끝날 때마다 clean up 되야함)
+     */
+    @GetMapping("/async-master")
+    @ResponseBody
+    public Callable<String> asyncHandler() {
+        // 여기는 톰캣이 할당해준 nio 쓰레드에서 실행
+        SecurityLogger.log("MVC");
+
+        // 이거는 별도의 쓰레드에서 실행
+        return new Callable<String>() {
+            @Override
+            public String call() throws Exception {
+                SecurityLogger.log("Callable");
+                return "Async Handler";
+            }
+        };
     }
 
 }
