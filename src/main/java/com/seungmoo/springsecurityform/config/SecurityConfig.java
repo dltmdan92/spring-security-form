@@ -1,6 +1,7 @@
 package com.seungmoo.springsecurityform.config;
 
 import org.springframework.boot.autoconfigure.security.SecurityProperties;
+import org.springframework.boot.autoconfigure.security.servlet.PathRequest;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.Ordered;
 import org.springframework.core.annotation.Order;
@@ -11,6 +12,7 @@ import org.springframework.security.access.hierarchicalroles.RoleHierarchyImpl;
 import org.springframework.security.access.vote.AffirmativeBased;
 import org.springframework.security.config.annotation.authentication.builders.AuthenticationManagerBuilder;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
+import org.springframework.security.config.annotation.web.builders.WebSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configuration.WebSecurityConfigurerAdapter;
 import org.springframework.security.web.access.expression.DefaultWebSecurityExpressionHandler;
@@ -69,6 +71,17 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
         defaultWebSecurityExpressionHandler.setRoleHierarchy(roleHierarchy);
 
         return defaultWebSecurityExpressionHandler;
+    }
+
+    @Override
+    public void configure(WebSecurity web) throws Exception {
+        // FilterChainProxy에서 favicon 요청은 filter 적용 무시한다.
+        // 1. 필요없는 filters 적용 방지
+        // 2. .anyRequest().authenticated() --> 이거 때문에 익명 비인증 사용자의 경우 인증못받아서 /login로 이동하는 현상 방지
+        //web.ignoring().mvcMatchers("/favicon.ico"); // 매번 이렇게 static resource를 명시하는 것은 불편...
+
+        // 이렇게 정적 리소스 요청 시 선언해주면 더 편하다.
+        web.ignoring().requestMatchers(PathRequest.toStaticResources().atCommonLocations());
     }
 
     @Override
