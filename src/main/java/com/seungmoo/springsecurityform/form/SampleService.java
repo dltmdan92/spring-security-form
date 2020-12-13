@@ -2,7 +2,9 @@ package com.seungmoo.springsecurityform.form;
 
 import com.seungmoo.springsecurityform.account.Account;
 import com.seungmoo.springsecurityform.account.AccountContext;
+import com.seungmoo.springsecurityform.common.SecurityLogger;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.scheduling.annotation.Async;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -74,5 +76,20 @@ public class SampleService {
         Object credentials = authentication.getCredentials();
 
         boolean authenticated = authentication.isAuthenticated();
+    }
+
+    /**
+     * @Async : 특정 Bean 안의 메소드 호출할 떄, 별도의 쓰레드를 만들어서 비동기하게 처리한다.
+     *
+     * BUT @Async 애노테이션만 붙여서는 Async 처리가 안된다.
+     * Application Class에 @EnableAsync를 붙여 줘야 적용된다.
+     */
+    @Async
+    public void asyncService() {
+        // 여기서 쓰레드가 완전 다르기 때문에 Principal이 없다. --> 로그찍을 때 NullPointerException이 발생된다.
+        // SecurityContext가 공유되지 않는다.
+        // SecurityContextHolder의 strategy에 SecurityContextHolder.MODE_INHERITABLETHREADLOCAL 잡아주면 공유된다.
+        SecurityLogger.log("Async Service");
+        System.out.println("Async service is called.");
     }
 }

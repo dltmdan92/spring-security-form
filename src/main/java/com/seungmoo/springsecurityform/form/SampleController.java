@@ -97,7 +97,7 @@ public class SampleController {
      * ●	Callable: 비록 다른 쓰레드지만 그 안에서는 동일한 SecurityContext를 참조할 수 있다.
      * ●	PostProcess: SecurityContext를 정리(clean up)한다. (참고로 SecurityContext는 매 req가 끝날 때마다 clean up 되야함)
      */
-    @GetMapping("/async-master")
+    @GetMapping("/async-handler")
     @ResponseBody
     public Callable<String> asyncHandler() {
         // 여기는 톰캣이 할당해준 nio 쓰레드에서 실행
@@ -111,6 +111,19 @@ public class SampleController {
                 return "Async Handler";
             }
         };
+    }
+
+    /**
+     * Async한 Service를 호출해보자
+     * @return
+     */
+    @GetMapping("/async-service")
+    @ResponseBody
+    public String asyncService() {
+        SecurityLogger.log("MVC, before async service");
+        sampleService.asyncService(); // 비동기 로직이므로 아래 로그에서 기다리지 않고 실행할 것임.(보장 X)
+        SecurityLogger.log("MVC, after async service");
+        return "Async Service";
     }
 
 }
