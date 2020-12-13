@@ -93,7 +93,7 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
         // 동적 리소스는 여기서 필터 적용해주는 것이 좋다. (동적 리소스는 필터를 태우는게 맞음.)
         http.antMatcher("/**") // antMatcher 설정을 안하면 모든 요청을 해당 필터에 맵핑한다.
                 .authorizeRequests()
-                .mvcMatchers("/", "/info", "/account/**").permitAll() // 인증 없이도 접근 가능
+                .mvcMatchers("/", "/info", "/account/**", "/signup").permitAll() // 인증 없이도 접근 가능
                 .mvcMatchers("/admin").hasRole("ADMIN")
 
                 // ADMIN인데 USER 페이지에는 접근을 못하는 건가???
@@ -115,6 +115,7 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
         // form login 사용  /login으로 접속하면 login 창이 뜬다. /logout 접속 시 로그아웃 기능
         http.formLogin();
 
+
         http.httpBasic(); // http의 basic authentication 사용
 
         /**
@@ -124,6 +125,11 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
 
         // SecurityContextHolder.MODE_INHERITABLETHREADLOCAL --> 현재 쓰레드 기준에서 생성되는 하위쓰레드에도 SecurityContext가 공유된다.
         SecurityContextHolder.setStrategyName(SecurityContextHolder.MODE_INHERITABLETHREADLOCAL);
+
+        // 기본적으로 CSRF 토큰은 자동으로 생성 및 필터 처리한다.
+        // CSRF 토큰 미사용 처리 (form 기반 웹 서비스는 csrf 반드시 사용하도록 한다.
+        // REST API는 매번 CSRF 토큰 보내기가 번거롭기 때문에 보통 생략하게 된다.
+        //http.csrf().disable();
     }
 
     /**
