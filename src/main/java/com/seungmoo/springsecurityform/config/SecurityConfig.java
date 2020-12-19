@@ -118,6 +118,24 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
 
         http.httpBasic(); // http의 basic authentication 사용
 
+        http.logout()
+                // 실제 로그아웃 처리를 담당하는 logout 페이지인데 /logout 으로 셋팅하는게 좋다.
+                // 기본적으로 로그아웃 처리하는 path 또한 /logout으로 Spring Security가 Default 셋팅하는데
+                // 여기서 logout 페이지를 /mylogout 이런식으로 하면 별도의 커스텀이 또 필요하다.
+                // 그리고 이거는 그냥 설정 생략하면 된다.
+                //.logoutUrl("/logout")
+
+                .logoutSuccessUrl("/")
+                //.addLogoutHandler() // 핸들러를 추가할 수 있다.
+
+                // logout 한 다음에 HttpSession을 invalid 처리할 것인가?
+                // 기본값이 true 이므로 그냥 생략하면 된다. (대부분의 경우 true로 처리하니까 생략 ㄱㄱ)
+                //.invalidateHttpSession(true)
+
+                // 쿠키를 사용하는 경우, 로그아웃 한 다음에는 그 쿠키를 없애주는 것이 좋다.
+                //.deleteCookies("쿠키이름")
+                ;
+
         /**
          * 스프링 시큐리티의 기본 user 정보는
          * UserDetailsServiceAutoConfiguration 에서 생성함. (inMemoryUserDetailsManager --> SecurityProperties 참고)
