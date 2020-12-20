@@ -113,7 +113,14 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
         ;
 
         // form login 사용  /login으로 접속하면 login 창이 뜬다. /logout 접속 시 로그아웃 기능
-        http.formLogin();
+        http.formLogin()
+                // login 페이지의 username, password element의 name값을 바꿔줄 수 있다.
+                .usernameParameter("my-username")
+                .passwordParameter("my-password")
+                // 로그인 페이지 설정할 수 있으나,
+                // DefaultLoginPageGeneratingFilter, LogoutFilter가 등록되지 않는다. (FilterChainProxy에서 확인해볼 수 있다.)
+                //.loginPage("/login")
+                ;
 
 
         http.httpBasic(); // http의 basic authentication 사용
