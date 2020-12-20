@@ -115,15 +115,28 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
         // form login 사용  /login으로 접속하면 login 창이 뜬다. /logout 접속 시 로그아웃 기능
         http.formLogin()
                 // login 페이지의 username, password element의 name값을 바꿔줄 수 있다.
-                .usernameParameter("my-username")
-                .passwordParameter("my-password")
-                // 로그인 페이지 설정할 수 있으나,
+                //.usernameParameter("my-username")
+                //.passwordParameter("my-password")
+
+                // 로그인 페이지 커스텀해서 설정할 수 있으나, 이 옵션을 추가하는 순간
                 // DefaultLoginPageGeneratingFilter, LogoutFilter가 등록되지 않는다. (FilterChainProxy에서 확인해볼 수 있다.)
-                //.loginPage("/login")
+                // 위의 두 필터에 대해서 직접 구현해줘야 한다.
+                // 그리고 이거 셋팅해주면 /logout page도 없어지기 때문에, 별도로 만들어줘야 한다.
+                .loginPage("/login") // 설정한 URL로 로그인 req가 호출된다.
+                .permitAll() // 이거 안해주면 화면 안뜸
                 ;
 
-
-        http.httpBasic(); // http의 basic authentication 사용
+        /**
+         * Basic 인증이란??
+         * RequestHeader에 username과 password를 실어 보내면 브라우저 또는 서버가 그 값을 읽어서 인증하는 방식
+         * 예) Authorization: Basic QWxhZGRpbjpPcGVuU2VzYW1l (keesun:123 을 BASE 64로 인코딩)
+         * Http Header의 위의 정보를 담아서 보냄 --> 요청이 snipping 당하게 되면 위험!! --> HTTPS 를 사용하는 것이 좋다.
+         *
+         * Basic 인증 방식은 BasicAuthenticationFilter가 받는다. (여기서도 AuthenticationManager로 인증한다.)
+         * UsernamePasswordAuthenticationFilter와의 차이점 --> BasicAuthenticationFilter는 Request Header를 본다.
+         * 
+         */
+        http.httpBasic(); // http basic 인증을 사용 (BasicAuthenticationFilter)
 
         http.logout()
                 // 실제 로그아웃 처리를 담당하는 logout 페이지인데 /logout 으로 셋팅하는게 좋다.

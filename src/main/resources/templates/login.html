@@ -1,0 +1,21 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Login</title>
+</head>
+<body>
+    <h1>Login</h1>
+    <!--여기서 post로 로그인 요청 보낼 때는, UsernamePasswordAuthenticationFilter가 받아서 처리해준다.-->
+    <!-- loginPage 커스텀 할 때 UsernamePasswordAuthenticationFilter는 남아있음. -->
+    <div th:if="${param.error}">
+        Invalid username or password.
+    </div>
+    <form action="/login" method="post" th:action="@{/login}">
+        <!-- 여기 form 안에 CSRF value 태그 자동으로 들어간다. -->
+        <p>Username : <input type="text" name="username" /></p>
+        <p>Password : <input type="password" name="password" /></p>
+        <p><input type="submit" value="Login" /></p>
+    </form>
+</body>
+</html>

@@ -1,0 +1,15 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Login</title>
+</head>
+<body>
+<h1>Logout</h1>
+<!-- /logout 으로 POST 요청 보내면 LogoutFilter가 처리해준다. -->
+<form action="/logout" method="post" th:action="@{/logout}">
+    <!-- 여기 form 안에 CSRF value 태그 자동으로 들어간다. -->
+    <p><input type="submit" value="Logout" /></p>
+</form>
+</body>
+</html>
