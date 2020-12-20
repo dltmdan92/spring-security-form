@@ -15,6 +15,7 @@ import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.builders.WebSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configuration.WebSecurityConfigurerAdapter;
+import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.web.access.expression.DefaultWebSecurityExpressionHandler;
 import org.springframework.security.web.access.expression.WebExpressionVoter;
@@ -134,7 +135,7 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
          *
          * Basic 인증 방식은 BasicAuthenticationFilter가 받는다. (여기서도 AuthenticationManager로 인증한다.)
          * UsernamePasswordAuthenticationFilter와의 차이점 --> BasicAuthenticationFilter는 Request Header를 본다.
-         * 
+         *
          */
         http.httpBasic(); // http basic 인증을 사용 (BasicAuthenticationFilter)
 
@@ -155,6 +156,39 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
                 // 쿠키를 사용하는 경우, 로그아웃 한 다음에는 그 쿠키를 없애주는 것이 좋다.
                 //.deleteCookies("쿠키이름")
                 ;
+
+        // anonymous authentication을 설정해줄 수 있다.
+        // 현재 SecurityContextHolder에 셋팅된 Authentication이 없는 경우에 (null 인 경우),
+        // 새로운 Anonymous Authentication을 만들어서 Context에 넣어준다.
+
+        // 만약 SecurityContextHolder에 셋팅된 Authentication이 null이 아니면 아무일도 안함.
+        http.anonymous().principal("anonymousUser"); // anonymousUser가 디폴트임.
+
+        /**
+         * 세션 변조으로 인해 보안 이슈가 발생할 수 있다.
+         * SessionManagementFilter를 통해 sessionFixation "세션 변조 방지 전략"을 설정할 수 있다.
+         * ●	none
+         * ●	newSession --> 세션을 그냥 새로 만드는 것
+         * ●	migrateSession (서블릿 3.0- 컨테이너 사용시 기본값)
+         * ●	changeSessionId (서브릿 3.1+ 컨테이너 사용시 기본값)
+         */
+        http.sessionManagement()
+                // 세션 생성 전략 IF_REQUIRED 기본값
+                // form 기반의 security에서는 SessionCreationPolicy.STATELESS 이거 쓰면 안된다. (세션을 안 만든다는 것임...)
+                // 세션 안만들면 로그인만 계속하게 될 거다.
+                .sessionCreationPolicy(SessionCreationPolicy.IF_REQUIRED)
+                .sessionFixation()
+                    //.newSession()// 세션ID 변조가 아닌 신규 session을 만든다. (안좋음)
+                    .changeSessionId()
+                .invalidSessionUrl("/login") // 유효하지 않은 세션이 접근했을 때 어디로 보낼 것인가.
+                .maximumSessions(1) // 동시성 관리, 하나의 계정이 여러 곳에서 로그인할 수 있을지 설정, 1로 설정하면 동시에 하나만 로그인
+                    // 다른 브라우저에서 로그인하면서 maximumSession 로그인 갯수가 다 차게 되면, 이전에 로그인했던 세션은 만료가 된다.
+                    // 이 때 만료된 세션을 어느 URL로 보낼지 설정한다.
+                    .expiredUrl("/login")
+                    // maxSession을 넘기는 추가로그인을 허용할지, 막을지 설정. 기본값은 false(추가 로그인 허용)
+                    // 이걸 true로 하면 먼저 로그인한 사람이 계속 점유하게 된다. (ID 탈취한 사람이 계속 점유하는 케이스 --> 위험!)
+                    .maxSessionsPreventsLogin(false)
+        ;
 
         /**
          * 스프링 시큐리티의 기본 user 정보는
