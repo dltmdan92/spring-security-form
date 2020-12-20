@@ -1,5 +1,6 @@
 package com.seungmoo.springsecurityform.config;
 
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.autoconfigure.security.SecurityProperties;
 import org.springframework.boot.autoconfigure.security.servlet.PathRequest;
 import org.springframework.context.annotation.Configuration;
@@ -7,6 +8,7 @@ import org.springframework.core.Ordered;
 import org.springframework.core.annotation.Order;
 import org.springframework.security.access.AccessDecisionManager;
 import org.springframework.security.access.AccessDecisionVoter;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.access.expression.SecurityExpressionHandler;
 import org.springframework.security.access.hierarchicalroles.RoleHierarchyImpl;
 import org.springframework.security.access.vote.AffirmativeBased;
@@ -17,9 +19,15 @@ import org.springframework.security.config.annotation.web.configuration.EnableWe
 import org.springframework.security.config.annotation.web.configuration.WebSecurityConfigurerAdapter;
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.security.web.access.AccessDeniedHandler;
 import org.springframework.security.web.access.expression.DefaultWebSecurityExpressionHandler;
 import org.springframework.security.web.access.expression.WebExpressionVoter;
 
+import javax.servlet.ServletException;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+import java.io.IOException;
 import java.util.Arrays;
 import java.util.List;
 
@@ -39,6 +47,7 @@ import java.util.List;
  * --> 그리고 SecurityFilterAutoConfiguration가 DelegatingFilterProxy에게 해당 Bean("springSecurityFilterChain")을 알려준다.
  *
  */
+@Slf4j
 @Configuration
 @EnableWebSecurity // 이거 빼도 된다. 스프링부트에서는 자동설정이 알아서 추가해주기 때문임.
 @Order(Ordered.LOWEST_PRECEDENCE - 100) // Config의 Order 설정 (숫자가 낮을 수록 우선순위)
@@ -189,6 +198,29 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
                     // 이걸 true로 하면 먼저 로그인한 사람이 계속 점유하게 된다. (ID 탈취한 사람이 계속 점유하는 케이스 --> 위험!)
                     .maxSessionsPreventsLogin(false)
         ;
+
+        // TODO ExceptionTranslatorFilter -> FilterSecurityInterceptor (AccessDecisionManager, AffirmativeBased 구현체 사용해서 인가처리)
+        // 발생할 수 있는 에러
+        // 1. AuthenticationException --> AuthenticationEntryPoint에서 예외처리 (인증이 가능한 페이지(login)로 보냄, 인증안된 상태에서 /dashboard 페이지 들어갈 때)
+        // 2. AccessDeniedException --> AccessDeniedHandler에서 예외처리 (기본적으로는 403 FORBIDDEN ERROR를 보여주고 error페이지로 간다. USER role 계정으로 ADMIN 접근할 때)
+        // 근데 AccessDeniedException 발생 시 이동하는 페이지가 안 이쁘다 --> Custom해서 User 친화적인 페이지를 만들어 주자.
+        // ExceptionTranslatorFilter는 FilterSecurityInterceptor를 감싸서 실행해야 한다.
+        // FilterSecurityInterceptor를 try catch로 감싸서 실행한다.
+        http.exceptionHandling()
+                //.accessDeniedPage("/access-denied")
+                // Handler를 만들어서 좀 더 기능을 추가해보자.
+                .accessDeniedHandler(new AccessDeniedHandler() {
+                    // 핸들러는 가급적 별도 클래스에 빼도록 한다.
+                    @Override
+                    public void handle(HttpServletRequest httpServletRequest, HttpServletResponse httpServletResponse, AccessDeniedException e) throws IOException, ServletException {
+                        UserDetails principal = (UserDetails) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+                        String username = principal.getUsername();
+                        // 실패 로그 남겨서 비정상적인 접속에 대한 기록을 남겨보자.
+                        log.info(username + " is denied to access " + httpServletRequest.getRequestURI());
+                        // 그리고 "/access-denied" 로 포워딩하자.
+                        httpServletResponse.sendRedirect("/access-denied");
+                    }
+                });
 
         /**
          * 스프링 시큐리티의 기본 user 정보는
