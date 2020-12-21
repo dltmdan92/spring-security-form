@@ -1,6 +1,8 @@
 package com.seungmoo.springsecurityform.config;
 
+import com.seungmoo.springsecurityform.account.AccountService;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.security.SecurityProperties;
 import org.springframework.boot.autoconfigure.security.servlet.PathRequest;
 import org.springframework.context.annotation.Configuration;
@@ -52,6 +54,9 @@ import java.util.List;
 @EnableWebSecurity // 이거 빼도 된다. 스프링부트에서는 자동설정이 알아서 추가해주기 때문임.
 @Order(Ordered.LOWEST_PRECEDENCE - 100) // Config의 Order 설정 (숫자가 낮을 수록 우선순위)
 public class SecurityConfig extends WebSecurityConfigurerAdapter {
+
+    @Autowired
+    AccountService accountService;
 
     /**
      * ROLE hierarchy 적용한 AccessDecisionManager를 만들었다.
@@ -175,6 +180,19 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
 
         // 만약 SecurityContextHolder에 셋팅된 Authentication이 null이 아니면 아무일도 안함.
         http.anonymous().principal("anonymousUser"); // anonymousUser가 디폴트임.
+
+        /**
+         * RememberMeAuthenticationToken 을 생성하여 인증할 수 있도록 한다.
+         * 세션이 사라지거나 만료가 되더라도 쿠키 또는 DB를 사용하여 저장된 토큰 기반으로 인증을 지원하는 필터
+         * 로그인 시 인증할 때 "remember-me" input tag name으로 submit 호출하면 인증 및 토큰 생성 된다.
+         * UsernamePasswordAuthenticationToken과는 별도로 생성되며, RememberMeAuthenticationFilter에서 인증한다.
+         *
+         * 쿠키에 토큰이 셋팅된다. --> 그 쿠키에 있는 토큰을 사용해서 인증한다.
+         * (참고로 UsernamePassword 로 로그인했을 때의 UsernamePasswordAuthentication 또한 SESSION 생성되면서 JSESSION_ID가 쿠키에 셋팅된다.)
+         */
+        http.rememberMe()
+                .userDetailsService(accountService)
+                .key("remember-me-sample");
 
         /**
          * 세션 변조으로 인해 보안 이슈가 발생할 수 있다.
