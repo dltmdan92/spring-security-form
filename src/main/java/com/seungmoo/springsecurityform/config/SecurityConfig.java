@@ -101,22 +101,25 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
         // FilterChain 설정, 여러 개의 FilterChain이 있을 경우 @Order 순위를 따른다.
         // 여기서 선언하는 것들에 따라 Filter들의 설정이 달라지는 것이다.
         // 동적 리소스는 여기서 필터 적용해주는 것이 좋다. (동적 리소스는 필터를 태우는게 맞음.)
-        http.antMatcher("/**") // antMatcher 설정을 안하면 모든 요청을 해당 필터에 맵핑한다.
+        // FilterSecurityInterceptor : HTTP 리소스 시큐리티 처리를 담당하는 필터. AccessDecisionManager를 사용해서 인가를 처리한다.
+        http.antMatcher("/**") // antMatcher 설정을 안하면 모든 요청을 해당 필터에 맵핑한다. /** : 앤트 패턴
                 .authorizeRequests()
                 .mvcMatchers("/", "/info", "/account/**", "/signup").permitAll() // 인증 없이도 접근 가능
-                .mvcMatchers("/admin").hasRole("ADMIN")
+                .mvcMatchers("/admin").hasRole("ADMIN") // hasAuthority("ROLE_ADMIN")와 동일하다. (hasRole에서는 ROLE_ 생략할 수 있다.)
 
                 // ADMIN인데 USER 페이지에는 접근을 못하는 건가???
                 // Spring Security는 ROLE_ADMIN, ROLE_USER 이런거 모른다. --> 어떻게 할까??
                 // 방법 1. ADMIN user의 경우, User.buider() 할 때 ADMIN 권한과 함께, USER 권한도 같이 준다.
                 // 방법 2. AccessDecisionManager가 ROLE들의 hierarchy를 이해하도록 설정한다. (직접 만듦)
-                .mvcMatchers("/user").hasRole("USER")
+                .mvcMatchers("/user").hasRole("USER") // hasAuthority("ROLE_USER")와 동일하다.
                 //.accessDecisionManager(accessDecisionManager()) // AccessDecisionManager를 직접 만들어서 넣어준다.
 
                 // 이렇게 하면 favicon 요청에 대해서 filter 15개를 전부 다 탄다. (안좋음)
                 //.requestMatchers(PathRequest.toStaticResources().atCommonLocations()).permitAll() --> 이거는 비추천, 느리다.
                 .anyRequest().authenticated()
-
+                //.anyRequest().anonymous() // 익명 사용자만 접근할 수 있도록 한다. (인증이 되면 접근이 실패함)
+                //.anyRequest().rememberMe() // rememberMe로 인증한 사용자만 접근을 허용
+                //.anyRequest().fullyAuthenticated() // rememberMe로 인증한 사용자는 다시 로그인 해야 한다. (중요한 URL 접근 시 재 로그인 시키는 경우)
                 // AccessDecisionManager 커스텀 셋팅하지 말고 이렇게 셋팅해도 된다.
                 // AccessDecisionManager는 그냥 디폴트이고, AccessDecisionVoter가 사용하는 ExpressionHandler만 바꾼것임.
                 .expressionHandler(securityExpressionHandler())
