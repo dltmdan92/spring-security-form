@@ -1,9 +1,13 @@
 package com.seungmoo.springsecurityform.form;
 
+import com.seungmoo.springsecurityform.account.Account;
 import com.seungmoo.springsecurityform.account.AccountContext;
 import com.seungmoo.springsecurityform.account.AccountRepository;
+import com.seungmoo.springsecurityform.account.UserAccount;
+import com.seungmoo.springsecurityform.common.CurrentUser;
 import com.seungmoo.springsecurityform.common.SecurityLogger;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
@@ -23,15 +27,29 @@ public class SampleController {
     AccountRepository accountRepository;
 
     @GetMapping("/")
-    public String index(Model model, Principal principal) {
+    public String index(
+            Model model,
+            //Principal principal
+            // 위의 Principal 객체 대신 UserAccount 객체를 받을 수 있다. (직접 만든 User 도메인)
+            //@AuthenticationPrincipal UserAccount userAccount
+            // 그리고 Account 객체를 직접 받는 방법도 있다.
+            // anonymousUser 객체가 아닌 경우에는 Principal에서 account 객체를 꺼내 준다. (근데 너무 길다 별도 애노테이션으로 빼자)
+            //@AuthenticationPrincipal(expression = "#this == 'anonymousUser' ? null : account") Account account
+            @CurrentUser Account account // 이렇게 별도 애노테이션으로 빼서 Account 도메인을 현재 User로 직접 받아올 수 있다.
+            ) {
+
+        // 이 Principal은 위의 파라미터에 있는 Principal과는 다르다.
+        // 이거는 UserDetailsService에서 리턴한 User 객체 이다.
+        // 이 User 객체를 우리가 만든 Account 객체로 쓸 수 없을까???
+        SecurityContextHolder.getContext().getAuthentication().getPrincipal();
 
         // 로그인을 안했을 때
-        if (principal == null) {
+        if (account == null) {
             model.addAttribute("message", "Hello Spring Security");
         }
         // 로그인을 했을 때
         else {
-            model.addAttribute("message", "Hello, " + principal.getName());
+            model.addAttribute("message", "Hello, " + account.getUsername());
         }
 
         return "index"; // 뷰 이름 리턴, 해당 뷰를 찾아서 response를 담아서 보내준다.

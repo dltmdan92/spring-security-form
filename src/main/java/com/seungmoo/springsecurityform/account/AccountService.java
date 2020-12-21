@@ -39,11 +39,16 @@ public class AccountService implements UserDetailsService {
         }
 
         // Spring Security에서 제공해주는 User 클래스를 활용
-        return User.builder()
+        /*return User.builder()
                 .username(account.getUsername())
                 .password(account.getPassword())
                 .roles(account.getRole())
-                .build();
+                .build();*/
+
+        // 우리가 직접 만든 도메인 Account 객체를 UserDetailsService에서 return 해보자 (Principal)
+        // Account 객체 자체를 그대로 return 할려면 Account가 UserDetails를 상속받아야 한다.
+        // BUT 도메인 객체는 독립성을 유지해주는 게 좋다.
+        return new UserAccount(account);
     }
 
     public Account createNew(Account account) {
