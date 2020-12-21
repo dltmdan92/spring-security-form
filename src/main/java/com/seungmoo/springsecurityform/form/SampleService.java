@@ -5,6 +5,7 @@ import com.seungmoo.springsecurityform.account.AccountContext;
 import com.seungmoo.springsecurityform.common.SecurityLogger;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.scheduling.annotation.Async;
+import org.springframework.security.access.annotation.Secured;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -16,6 +17,14 @@ import java.util.Collection;
 @Service
 @Slf4j
 public class SampleService {
+
+    // Method Security의 Annotation이다.
+    // 해당 메서드에 인증/인가된 User만 접근 가능
+    // @Secured("ROLE_USER"), @RolesAllowed("ROLE_USER") : 메서드 호출 전에 권한 검사를 한다. SpEL 사용 불가
+    // @PreAuthorize("hasRole(USER)") : 이것도 메서드 호출 전에 권한 검사 한다. SpEL 사용 가능
+    // @PostAuthorize("hasRole(USER)") : 메서드 호출 후에 권한 검사를 한다. (메서드를 수행 후 후속 작업에 대해 막을 지 말지)
+    // 메서드 시큐리티에서는 Web 용 시큐리티 설정(SecurityConfig) 클래스와는 별도로 설정해줘야 한다. ex) SecurityConfig에서 설정한 계층관계 모른다.
+    @Secured("ROLE_USER")
     public void dashboard() {
         // SecurityContextPersistenceFilter가 Http Request 를 받아서 처리한다. (시큐리티 필터를 거치는 모든 요청)
 
