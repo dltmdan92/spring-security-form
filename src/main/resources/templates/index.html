@@ -1,17 +1,26 @@
 <!DOCTYPE html>
-<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<html lang="en" xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
 <head>
     <meta charset="UTF-8">
     <title>Index</title>
 </head>
 <body>
     <h1 th:text="${message}">Hello</h1>
-
+    <!--  expr('isAuthenticated()') : 이 부분이 Type-Safe 하지 않아서 불편하다. 아래 방법 사용할 것
     <div th:if="${#authorization.expr('isAuthenticated()')}">
         <h2 th:text="${#authentication.name}">Name</h2>
         <a href="/logout" th:href="@{/logout}">Logout</a>
     </div>
     <div th:unless="${#authorization.expr('isAuthenticated()')}">
+        <a href="/login" th:href="@{/login}">Login</a>
+    </div>-->
+
+    <!-- 아래 방법은 자동완성 기능 지원덕분에 더 좋다. 위 랑 똑같은 기능 -->
+    <div sec:authorize-expr="isAuthenticated()">
+        <h2 sec:authentication="name">Name</h2>
+        <a href="/logout" th:href="@{/logout}">Logout</a>
+    </div>
+    <div sec:authorize-expr="!isAuthenticated()">
         <a href="/login" th:href="@{/login}">Login</a>
     </div>
 </body>
