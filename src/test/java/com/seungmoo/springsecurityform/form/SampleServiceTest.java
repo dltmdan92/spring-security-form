@@ -34,7 +34,7 @@ public class SampleServiceTest {
         account.setRole("ADMIN"); // ADMIN > USER에 대한 Hierarchy를 설정했다. (MethodSecurity에서)
         account.setUsername("seungmoo");
         account.setPassword("123");
-        accountService.createNew(account);
+        //accountService.createNew(account);
 
         // userDetails 가 Principal이다. (UserDetailsService에서 return 하는 객체가 곧 Principal이다.)
         UserDetails userDetails = accountService.loadUserByUsername("seungmoo");
