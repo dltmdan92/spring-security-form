@@ -76,6 +76,12 @@
             <scope>test</scope>
         </dependency>
 
+        <!-- thymeleaf에서 제공하는 Spring Security 연동 라이브러리 이다. -->
+        <dependency>
+            <groupId>org.thymeleaf.extras</groupId>
+            <artifactId>thymeleaf-extras-springsecurity5</artifactId>
+        </dependency>
+
     </dependencies>
 
     <build>

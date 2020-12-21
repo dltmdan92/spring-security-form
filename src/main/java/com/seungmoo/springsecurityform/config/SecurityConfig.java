@@ -1,6 +1,7 @@
 package com.seungmoo.springsecurityform.config;
 
 import com.seungmoo.springsecurityform.account.AccountService;
+import com.seungmoo.springsecurityform.common.LoggingFilter;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.security.SecurityProperties;
@@ -25,6 +26,7 @@ import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.web.access.AccessDeniedHandler;
 import org.springframework.security.web.access.expression.DefaultWebSecurityExpressionHandler;
 import org.springframework.security.web.access.expression.WebExpressionVoter;
+import org.springframework.security.web.context.request.async.WebAsyncManagerIntegrationFilter;
 
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
@@ -103,6 +105,11 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
 
     @Override
     protected void configure(HttpSecurity http) throws Exception {
+
+        // WebAsyncManagerIntegrationFilter가 FilterChain에서 가장 앞에 있는 Filter임
+        // FilterChain 맨 앞에 넣음으로써 성능 측정이나 해보자.
+        http.addFilterBefore(new LoggingFilter(), WebAsyncManagerIntegrationFilter.class);
+
         // FilterChain 설정, 여러 개의 FilterChain이 있을 경우 @Order 순위를 따른다.
         // 여기서 선언하는 것들에 따라 Filter들의 설정이 달라지는 것이다.
         // 동적 리소스는 여기서 필터 적용해주는 것이 좋다. (동적 리소스는 필터를 태우는게 맞음.)
